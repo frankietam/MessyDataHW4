@@ -59,9 +59,6 @@ neighborhood <- c("Allston",
 
 url.data <- tibble(url, neighborhood)
 
-## custom words
-custom_words <- read.table("custom_words.txt", header = FALSE)
-
 ## Extract from UHubScript.R
 
 ## FUNCTIONS TO GET THE XML PARSED HTML FROM SITE

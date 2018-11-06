@@ -26,6 +26,9 @@ crime.data <- crime.data.full
 # Convert to tibble
 crime.data <- as.tibble(crime.data)
 
+# Remove white space and \n in crime type
+crime.data <- crime.data %>% mutate(crime.type=str_trim(crime.type))
+
 # Convert to date string to POSIXct and extract hour from date
 crime.data <- crime.data %>% mutate(crime.date=mdy_hm(crime.date)) %>% mutate(hour=hour(crime.date))
 

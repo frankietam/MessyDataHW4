@@ -1,9 +1,10 @@
 ## Messy Data and Machine Learning Homework 4
 ## Paul Sergent, Ruoyu Zhu, Frankie Tam
-## Crime_Library.R
+## Crime_analysis.R
 
 source('crime_library.R')
 
+## Part A
 
 ## Retrieve data from urls
 crime.data.full <- foreach(i=1:nrow(url.data), .combine='rbind') %dopar% {
@@ -37,3 +38,11 @@ crime.data <- select(crime.data, -crime.date)
 
 # Rename columns
 names(crime.data) <- c("crime", "neighborhood", "hour")
+
+## Part B
+
+## Part C
+
+## Part D
+
+## Part E

@@ -145,7 +145,7 @@ coef[order(coef[,1], decreasing = T),]
 #When you are removing stop words, make sure you remove bigrams 
 #that contain a stop word as either the first or second word in the bigram. [5 pts]
 
-## (a)
+# a)
 #unnest
 bigrams_appeals <- appeals.data%>% unnest_tokens(bigram, text, token = 'ngrams', n=2)
 
@@ -168,9 +168,7 @@ bigrams_appeals_fifth %>% count(bigram) %>% arrange(desc(n)) %>% slice(1:10)
 bigrams_appeals_ninth <- bigrams_appeals %>% filter(circuit == 'ninth')
 bigrams_appeals_ninth %>% count(bigram) %>% arrange(desc(n)) %>% slice(1:10)
 
-
-
-## (b)
+# b)
 # create document term tibble
 bi_document_term <- appeals.data
 
@@ -208,8 +206,7 @@ bi_train <- bi_document_term %>% slice(1:bi_split_size)
 # 50% for test set
 bi_test <- bi_document_term %>% slice(bi_split_size+1:n())
 
-
-## (d)
+# d)
 
 bi_model  <- glm(circuit ~ . -opinion_id, bi_train, family=binomial())
 
@@ -227,3 +224,10 @@ cat('the AUC score is', AUC_bi)
 # summary sorted by coefficients
 coef <- summary(bi_model)[["coefficients"]]
 coef[order(coef[,1], decreasing = T),]
+
+## Part D
+
+# b)
+
+# d)
+

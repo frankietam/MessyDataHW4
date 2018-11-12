@@ -12,6 +12,8 @@ library(ROCR)
 # Import data 
 appeals.data <- read.delim('recent_opinions.tsv', header=TRUE, stringsAsFactors = FALSE, col.names=c('year','text','circuit'))
 appeals.data <- as.tibble(appeals.data)
+# add opinion_id 
+appeals.data <- tibble::rowid_to_column(appeals.data, "opinion_id")
 
 # custom words
 custom_words <- read.table("custom_words.txt", header = FALSE, col.names=c('word'))
@@ -51,9 +53,6 @@ document_term <- appeals.data
 
 # top 100 most common words in the entire corpus
 top_100 <- text_appeals %>% count(word) %>% arrange(desc(n)) %>% slice(1:100)
-
-# add opinion_id 
-document_term <- tibble::rowid_to_column(document_term, "opinion_id")
 
 # recode circuit to 1 and 0
 document_term <- document_term %>% mutate (circuit = case_when (
@@ -174,9 +173,6 @@ bi_document_term <- appeals.data
 
 # top 100 most common bigrams in the entire corpus
 bigram_100 <- bigrams_appeals %>% count(bigram) %>% arrange(desc(n)) %>% slice(1:100)
-
-# add opinion_id 
-bi_document_term <- tibble::rowid_to_column(bi_document_term, "opinion_id")
 
 # recode circuit to 1 and 0
 bi_document_term <- bi_document_term %>% mutate (circuit = case_when (

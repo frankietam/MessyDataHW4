@@ -225,5 +225,43 @@ coef[order(coef[,1], decreasing = T),]
 
 # b)
 
+
+
 # d)
+
+## Part E
+
+## Part F
+
+#unnest
+trigrams_appeals <- appeals.data %>% unnest_tokens(trigram, text, token = 'ngrams', n=3)
+
+#remove all stop words
+trigrams_appeals <- trigrams_appeals %>% 
+  separate(trigram, c("word1", "word2","word3"), sep = " ") %>% 
+  filter(!word1 %in% all_stop_words$word) %>%
+  filter(!word2 %in% all_stop_words$word) %>%
+  filter(!word3 %in% all_stop_words$word) %>% 
+  unite(trigram, word1, word2,word3, sep = " ")
+
+#filter word "supreme"
+trigrams_appeals_fifth <- trigrams_appeals %>% filter(circuit == 'fifth')
+trigrams_appeals_ninth <- trigrams_appeals %>% filter(circuit == 'ninth')
+
+tri_fifth_supreme <- trigrams_appeals_fifth %>% 
+  separate(trigram, c("word1", "word2","word3"), sep = " ") %>% 
+  filter(word1 == "supreme" | word2 == "supreme" | word3 == "supreme" ) %>%
+  unite(trigram, word1, word2,word3, sep = " ")
+
+tri_ninth_supreme <- trigrams_appeals_ninth %>% 
+  separate(trigram, c("word1", "word2","word3"), sep = " ") %>% 
+  filter(word1 == "supreme" | word2 == "supreme" | word3 == "supreme" ) %>%
+  unite(trigram, word1, word2,word3, sep = " ")
+
+#top 10 trigrams 
+#(e.g., what are the different contexts 
+#in which the 5th vs. 9th circuit opinions are mentioning “supreme”?)
+tri_fifth_supreme %>% count(trigram) %>% arrange(desc(n)) %>% slice(1:10)
+tri_ninth_supreme %>% count(trigram) %>% arrange(desc(n)) %>% slice(1:10)
+
 

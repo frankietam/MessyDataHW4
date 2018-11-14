@@ -10,10 +10,14 @@ library(ROCR)
 ## Part A
 
 # Import data 
-appeals.data <- read.delim('recent_opinions.tsv', header=TRUE, stringsAsFactors = FALSE, col.names=c('year','text','circuit'))
-appeals.data <- as.tibble(appeals.data)
+appeals.data <- read_tsv('recent_opinions.tsv')
+#appeals.data <- read.delim('recent_opinions.tsv', header=TRUE, stringsAsFactors = FALSE, col.names=c('year','text','circuit'))
+
 # add opinion_id 
 appeals.data <- tibble::rowid_to_column(appeals.data, "opinion_id")
+
+sum(is.na(appeals.data))
+# na.omit(appeals.data)
 
 # custom words
 custom_words <- read.table("custom_words.txt", header = FALSE, col.names=c('word'))
@@ -24,6 +28,8 @@ custom_words <- custom_words %>% mutate(lexicon = "custom")
 
 # Combine custom words and stop words
 all_stop_words <- rbind(stop_words, custom_words)
+
+
 
 ## Part B
 
@@ -140,13 +146,14 @@ coef[order(coef[,1], decreasing = T),]
 #interpretation of the largest model coefficient
 
 ## Part C bigram
+
 #consider the top 100 bigrams instead of individual words.
 #When you are removing stop words, make sure you remove bigrams 
 #that contain a stop word as either the first or second word in the bigram. [5 pts]
 
 # a)
 #unnest
-bigrams_appeals <- appeals.data%>% unnest_tokens(bigram, text, token = 'ngrams', n=2)
+bigrams_appeals <- appeals.data %>% unnest_tokens(bigram, text, token = 'ngrams', n=2)
 
 #bigrams_appeals.cp <- bigrams_appeals
 #bigrams_appeals.cp %>% count(bigram, sort = TRUE)
@@ -171,6 +178,7 @@ bigrams_appeals_ninth %>% count(bigram) %>% arrange(desc(n)) %>% slice(1:10)
 # create document term tibble
 bi_document_term <- appeals.data
 
+sum(is.na(bi_document_term))
 # top 100 most common bigrams in the entire corpus
 bigram_100 <- bigrams_appeals %>% count(bigram) %>% arrange(desc(n)) %>% slice(1:100)
 
@@ -189,8 +197,14 @@ for (i in 1:100){
   names(bi_document_term)[names(bi_document_term) == "newcol"] <- bigram_100$bigram[i]
 }
 
+# save a copy with original text
+bi_document_term_text <- bi_document_term
+
 # remove extra columns
 bi_document_term <- bi_document_term %>% select(-text, -year)
+
+# sum(is.na(bi_document_term))
+# unique (unlist (lapply (bi_document_term, function (x) which (is.na (x)))))
 
 # shuffle the data
 bi_document_term <- bi_document_term %>% slice(sample(1:n()))
@@ -225,9 +239,51 @@ coef[order(coef[,1], decreasing = T),]
 
 # b)
 
+# new document tibble
+bi_tf_idf_document_term <- bi_document_term_text
 
+# add total term count
+bi_tf_idf_document_term <- bi_tf_idf_document_term %>% mutate(total_term_count = str_count(bi_tf_idf_document_term$text, '\\w+'))
+
+# calculate number of documents with bigram
+non_zero_rows <- colSums(bi_tf_idf_document_term != 0, na.rm = TRUE)
+
+# calculate tf-idf for each bigram manually
+for (j in 5:105) {
+  bi_tf_idf_document_term[j] <- bi_tf_idf_document_term[j]/bi_tf_idf_document_term["total_term_count"] * log10(nrow(bi_tf_idf_document_term)/as.integer(non_zero_rows[j]))
+  }
+
+# remove extra columns
+bi_tf_idf_document_term <- bi_tf_idf_document_term %>% select(-text, -year, -total_term_count)
+
+# shuffle the data
+bi_tf_idf_document_term <- bi_tf_idf_document_term %>% slice(sample(1:n()))
+
+# 50% for training set
+split_size = floor(nrow(bi_tf_idf_document_term)/2)
+bi_tf_idf_train <- bi_tf_idf_document_term %>% slice(1:split_size)
+
+# 50% for test set
+bi_tf_idf_test <- bi_tf_idf_document_term %>% slice(split_size+1:n())
 
 # d)
+
+bi_tf_id_model <- glm(circuit ~ . -opinion_id, bi_tf_idf_train, family=binomial())
+
+# examine model
+summary(bi_tf_id_model)
+
+test_predict <- predict(bi_tf_id_model,newdata = bi_tf_idf_test, type='response') 
+bi_tf_idf_test <-  bi_tf_idf_test %>% mutate(prediction_prob = test_predict)
+bi_tf_idf_test.pred <- prediction(bi_tf_idf_test$prediction_prob, bi_tf_idf_test$circuit)
+bi_tf_idf_test.perf <- performance(bi_tf_idf_test.pred, "auc")
+AUC_bi <- 100*bi_tf_idf_test.perf@y.values[[1]]
+cat('the AUC score is', AUC_bi)
+
+
+# summary sorted by coefficients
+coef <- summary(bi_tf_id_model)[["coefficients"]]
+coef[order(coef[,1], decreasing = T),]
 
 ## Part E
 
